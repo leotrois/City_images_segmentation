@@ -3,7 +3,6 @@ from torchvision.transforms import v2
 import pandas as pd
 import torchvision
 from torchvision.io import read_image, ImageReadMode
-#On crée un dataset custom à partir des images du dossier 'dataset'
 
 
 class CustomDataset(Dataset):
@@ -24,6 +23,6 @@ class CustomDataset(Dataset):
         wb, couleur =read_image(img_path_bw, mode = ImageReadMode.GRAY ), read_image(img_path_couleur)
         wb, couleur = self.transform(wb), self.transform(couleur)
 
-        wb, couleur= (wb -127.5)/127.5, (couleur -127.5)/127.5 # We normalise the images
+        wb, couleur= (wb -127.5)/127.5, (couleur -127.5)/127.5
         
         return wb.to(self.device), couleur.to(self.device)

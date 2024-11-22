@@ -1,9 +1,15 @@
 # Implémentation de Pix2Pix
 
+Une partie du code de ce projet est tiré d'un projet précédent de [Colorisation de comics](Colorisation-de-comics)
+
+
+La suite du readme n'est pas à jour...
+
+
+
 Ce projet est une implémentation du modèle Pix2Pix, un réseau de neurones pour la traduction d'images par paires, tel que décrit dans le papier "Image-to-Image Translation with Conditional Adversarial Networks" par Isola et al. Nous allons utiliser ce modèle pour colorer des images de comics.
 Sur l'image suivante, la première colonne représente l'image d'origine, la deuxième l'image en noir et blanc et la troisième la prédiction du modèle.
 
-![Results](images/results.jpg)
 
 ## Structure du projet
 

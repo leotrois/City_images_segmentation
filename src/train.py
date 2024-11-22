@@ -9,9 +9,7 @@ IMG_SIZE = (512,512)
 EPOCHS = 10
 device = torch.device('cuda' if torch.cuda.is_available() else torch.device('cpu'))
 
-import os
-os.chdir(r"C:\Users\Léo\Desktop\Mini_projet_Automatants")
-data = CustomDataset(r"C:\Users\Léo\Desktop\Mini_projet_pour_git\Colorisation-de-comics\dataset.csv", IMG_SIZE, device = device)
+data = CustomDataset("./Dataset", IMG_SIZE, device = device)
 
 train_size = int(0.9 * len(data))
 test_size = len(data) - train_size

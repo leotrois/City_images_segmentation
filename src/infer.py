@@ -8,8 +8,7 @@ import torch
 PRETRAINED = True
 IMG_SIZE = (512, 512)
 
-import os 
-os.chdir(r"C:\Users\Léo\Desktop\Mini_projet_pour_git\Colorisation-de-comics")
+
 if PRETRAINED:
     PATH = "weights_pre_trained.pt"
 else:
