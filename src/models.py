@@ -1,6 +1,8 @@
 from torch import nn
 import torch
 from tqdm import tqdm
+import wandb
+from torchvision import utils
 
 
 
@@ -159,11 +161,16 @@ class Pix2Pix(nn.Module):
         self.optimizer_unet.step()
         return loss_value, gan_loss_value
     
-    def train(self, epoch, dataloader, device):
+    def train(self, epoch, dataloader,batch_test, device):
         for e in tqdm(range(epoch)):
             progression = tqdm(dataloader, colour="#f0768b")
             
             for i, batch in enumerate(progression):
                 loss, gan_loss = self.train_step(batch[0].to(device), batch[1].to(device))
                 progression.set_description(f"Epoch {e+1}/{epoch} | loss_gen: {loss} | loss_gan: {gan_loss}")
-
+                wandb.log({"loss_gen":loss, "loss_gan":gan_loss })
+            image_array = utils.make_grid([batch_test[0][0], self.forward(batch_test[0][0])],nrows=2)
+            images = wandb.Image(
+                image_array, caption = f" Left:Input, Right:Output, epoch {e+1}"
+            )
+            wandb.log({"examples": images})
