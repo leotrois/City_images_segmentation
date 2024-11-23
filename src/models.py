@@ -24,7 +24,7 @@ class down(nn.Module):
 
 
 class up(nn.Module):
-    def __init__(self,in_channel,out_channel, activation = True) -> None:
+    def __init__(self,in_channel,out_channel,activation = True) -> None:
         super().__init__()
         self.activation = activation # Pour la dernière couche, on veut des valeurs entre -1 et 1
         self.conv_transpose = nn.ConvTranspose2d(in_channels=in_channel,out_channels=out_channel, kernel_size=(2,2), stride=2)
@@ -32,7 +32,9 @@ class up(nn.Module):
         if activation:
             self.conv2d_1 = nn.Conv2d(in_channels=out_channel*2, out_channels= out_channel,kernel_size=(2,2),  padding='same')
         else : 
-            self.conv2d_1 = nn.Conv2d(in_channels=out_channel+1, out_channels= out_channel,kernel_size=(2,2),  padding='same')
+            self.conv2d_1 = nn.Conv2d(in_channels=out_channel + 3, out_channels= out_channel,kernel_size=(2,2),  padding='same')
+ 
+
 
         self.conv2d_2 = nn.Conv2d(in_channels=out_channel, out_channels= out_channel,kernel_size=(2,2),  padding='same')
 
@@ -44,7 +46,7 @@ class up(nn.Module):
         if self.activation :
             x = nn.functional.leaky_relu(x)
         else:
-            x = 2* torch.nn.functional.sigmoid(x) -1
+            x = torch.nn.functional.sigmoid(x)
         return x
       
           
@@ -54,7 +56,7 @@ class up(nn.Module):
 class Unet_with_cat(nn.Module):
     def __init__(self,nb_features) -> None:
         super().__init__()
-        self.down1 = down(1,nb_features)  
+        self.down1 = down(3,nb_features)  
         self.down2 = down(nb_features,nb_features*2)  
         self.down3 = down(nb_features * 2, nb_features* 4) 
 
@@ -63,21 +65,21 @@ class Unet_with_cat(nn.Module):
         self.up1 = up(nb_features *8, nb_features*4) 
         self.up2 = up(nb_features *4, nb_features*2) 
         self.up3 = up(nb_features *2, nb_features) 
-        self.up4 = up(nb_features, 3,activation=False) 
+        self.up4 = up(nb_features, 4,activation=False) 
     
     def forward(self,x):
         x0 = x
-        x = self.down1(x) # (1,512,512) -> (64,256,256)
+        x = self.down1(x) 
         x1 = x
-        x = self.down2(x) # (64,256,256) -> (128,128,128)
+        x = self.down2(x)
         x2 = x
-        x = self.down3(x) # (128,128,128) -> (256,64,64)
+        x = self.down3(x) 
         x3 = x
-        x = self.down4(x) # (256,64,64) -> (512,32,32)
-        x = self.up1(x, x3) # (512,32,32) -> (256,64,64)
-        x = self.up2(x,x2) # (256,64,64) -> (128,128,128)
-        x = self.up3(x,x1) # (128,128,128) -> (64,256,256)
-        x = self.up4(x,x0) # (64,256,256) -> (3,512,512)
+        x = self.down4(x) 
+        x = self.up1(x, x3) 
+        x = self.up2(x,x2)
+        x = self.up3(x,x1) 
+        x = self.up4(x,x0) 
         return x
     
     def loss(self,real_images, fake_images, disc_pred):
@@ -95,7 +97,7 @@ class Discriminateur(nn.Module):
     #Ne marche probablement pas, je n'ai pas réfléchi aux tailles et nombre de canaux
     def __init__(self, nb_features) -> None:
         super().__init__()
-        self.down1 = down(4,nb_features)
+        self.down1 = down(7,nb_features)
         self.down2 = down(nb_features,nb_features*2)
         self.down3 = down(nb_features * 2, nb_features* 4)
         self.down4 = down(nb_features * 4, nb_features* 8)
@@ -157,11 +159,11 @@ class Pix2Pix(nn.Module):
         self.optimizer_unet.step()
         return loss_value, gan_loss_value
     
-    def train(self, epoch, dataloader):
+    def train(self, epoch, dataloader, device):
         for e in tqdm(range(epoch)):
             progression = tqdm(dataloader, colour="#f0768b")
             
             for i, batch in enumerate(progression):
-                loss, gan_loss = self.train_step(batch[0], batch[1])
+                loss, gan_loss = self.train_step(batch[0].to(device), batch[1].to(device))
                 progression.set_description(f"Epoch {e+1}/{epoch} | loss_gen: {loss} | loss_gan: {gan_loss}")
 
