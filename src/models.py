@@ -2,8 +2,7 @@ from torch import nn
 import torch
 from tqdm import tqdm
 import wandb
-from torchvision import utils
-
+from torchvision import utils,transforms
 
 
 class down(nn.Module):
@@ -169,7 +168,15 @@ class Pix2Pix(nn.Module):
                 loss, gan_loss = self.train_step(batch[0].to(device), batch[1].to(device))
                 progression.set_description(f"Epoch {e+1}/{epoch} | loss_gen: {loss} | loss_gan: {gan_loss}")
                 wandb.log({"loss_gen":loss, "loss_gan":gan_loss })
-            image_array = utils.make_grid([batch_test[0][0], self.forward(batch_test[0][0])],nrows=2)
+                
+            
+            input = transforms.ToPILImage()(torch.squeeze(batch_test[0]))
+            pred = transforms.ToPILImage()(torch.squeeze(self.forward(batch_test[0].to(device)))).convert("RGB")
+            
+            input = transforms.ToTensor()(input)
+            pred = transforms.ToTensor()(pred)
+            
+            image_array = utils.make_grid([input, pred],nrow=2)
             images = wandb.Image(
                 image_array, caption = f" Left:Input, Right:Output, epoch {e+1}"
             )

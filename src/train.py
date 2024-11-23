@@ -39,7 +39,8 @@ for batch in x_test:
     batch_test = batch
     break
 
-
+print(len(batch_test))
+print(batch_test[0][0].size())
 if __name__ == "__main__":
     model = Pix2Pix().to(device)
     model.train(EPOCHS, x_train,batch_test, device)
