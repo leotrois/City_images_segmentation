@@ -7,7 +7,7 @@ from PIL import Image
 import torchvision
 class down(nn.Module):
     
-    def __init__(self,in_channels,out_channels) -> None:
+    def __init__(self,in_channels,out_channels,last = False) -> None:
         super().__init__()
         self.couche1 = nn.Conv2d(in_channels=in_channels, out_channels= out_channels,kernel_size=(3,3),  padding='same')
         self.couche2 = nn.Conv2d(in_channels=out_channels, out_channels= out_channels,kernel_size=(3,3),  padding='same')
@@ -17,9 +17,14 @@ class down(nn.Module):
         x = self.couche1(x)
         x = nn.functional.leaky_relu(x)
         x = self.couche2(x)
-        x = nn.functional.leaky_relu(x)
-        x = self.maxpool(x)
-        x = self.dropout(x)
+        if last == False:
+            x = nn.functional.leaky_relu(x)
+            x = self.maxpool(x)
+            x = self.dropout(x)
+        else:
+            x = nn.functional.sigmoid(x)
+            x = self.maxpool(x)
+
         return x
     
 
@@ -90,7 +95,7 @@ class Unet_with_cat(nn.Module):
         dupage_discriminateur = torch.nn.BCEWithLogitsLoss()(disc_pred,torch.ones_like(disc_pred))
 
         loss_gen = dupage_discriminateur + 100 * l1
-        return loss_gen
+        return loss_gen , dupage_discriminateur, l1
     
     
 class Discriminateur(nn.Module):
@@ -102,7 +107,7 @@ class Discriminateur(nn.Module):
         self.down2 = down(nb_features,nb_features*2)
         self.down3 = down(nb_features * 2, nb_features* 4)
         self.down4 = down(nb_features * 4, nb_features* 8)
-        self.down5 = down(nb_features * 8, 1) # On veut une grille de pixels
+        self.down5 = down(nb_features * 8, 1,last = True) # On veut une grille de pixels
         # En sortie on n'a pas un nombre car Patch Gan !!! Chaque pixel de l'image 
     def forward(self, x, y):
         x = torch.cat([x,y], dim = 1) # (batch size, 256,256,channels*2)
@@ -152,22 +157,23 @@ class Pix2Pix(nn.Module):
         self.unet.zero_grad()
         fake_images = self.unet(X_batch)
         disc_fake_output = self.discriminateur(fake_images,X_batch)
-        gen_loss = self.unet.loss(Y_batch, fake_images, disc_fake_output)
+        loss_tuple = self.unet.loss(Y_batch, fake_images, disc_fake_output)
         
-        loss_value = gen_loss.item()
+        loss_value, dupage_discriminateur, l1    = loss_tuple
         
-        gen_loss.backward()
+        
+        loss_value.backward()
         self.optimizer_unet.step()
-        return loss_value, gan_loss_value
+        return loss_value.item(), gan_loss_value , dupage_discriminateur.item(), l1.item()
     
     def train(self, epoch, dataloader,batch_test, device):
         for e in tqdm(range(epoch)):
             progression = tqdm(dataloader, colour="#f0768b")
             
             for i, batch in enumerate(progression):
-                loss, gan_loss = self.train_step(batch[0].to(device), batch[1].to(device))
+                loss, gan_loss , dupage_discriminateur, l1= self.train_step(batch[0].to(device), batch[1].to(device))
                 progression.set_description(f"Epoch {e+1}/{epoch} | loss_gen: {loss} | loss_gan: {gan_loss}")
-                wandb.log({"loss_gen":loss, "loss_gan":gan_loss })
+                wandb.log({"gen_loss":loss, "d_CE_loss":gan_loss, "L1_loss": l1, "g_CE_loss":dupage_discriminateur })
                 
             
             input = transforms.ToPILImage()(torch.squeeze(batch_test[0]))
