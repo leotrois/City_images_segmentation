@@ -3,8 +3,8 @@ import torch
 from tqdm import tqdm
 import wandb
 from torchvision import utils,transforms
-
-
+from PIL import Image
+import torchvision
 class down(nn.Module):
     
     def __init__(self,in_channels,out_channels) -> None:
@@ -173,11 +173,16 @@ class Pix2Pix(nn.Module):
             input = transforms.ToPILImage()(torch.squeeze(batch_test[0]))
             pred = transforms.ToPILImage()(torch.squeeze(self.forward(batch_test[0].to(device)))).convert("RGB")
             
+            ground_truth = transforms.ToPILImage()(torch.squeeze(batch_test[1].to(device))).convert("RGB")
+            
+
             input = transforms.ToTensor()(input)
             pred = transforms.ToTensor()(pred)
+            ground_truth = transforms.ToTensor()(ground_truth)
+
             
-            image_array = utils.make_grid([input, pred],nrow=2)
+            image_array = utils.make_grid([input, pred, ground_truth],nrow=3)
             images = wandb.Image(
-                image_array, caption = f" Left:Input, Right:Output, epoch {e+1}"
+                image_array, caption = f" Left:Input, Center:Output, Right:Ground truth, epoch {e+1}"
             )
             wandb.log({"examples": images})

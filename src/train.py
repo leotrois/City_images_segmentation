@@ -5,9 +5,9 @@ from torchvision.datasets import Cityscapes
 import torchvision
 import wandb
 
-BATCH_SIZE = 8
+BATCH_SIZE = 16
 IMG_SIZE = (512,512)
-EPOCHS = 10
+EPOCHS = 100
 device = torch.device('cuda' if torch.cuda.is_available() else torch.device('cpu'))
 
 
@@ -26,7 +26,7 @@ transform = torchvision.transforms.Compose(
     
 )
 data = Cityscapes("./data",split = "train", mode = "fine", target_type = "color", transform = transform, target_transform = transform)
-data_test = Cityscapes("./data",split = "test", mode = "fine", target_type = "color", transform = transform, target_transform = transform)
+data_test = Cityscapes("./data",split = "train", mode = "fine", target_type = "color", transform = transform, target_transform = transform)
 
 
 
@@ -39,8 +39,6 @@ for batch in x_test:
     batch_test = batch
     break
 
-print(len(batch_test))
-print(batch_test[0][0].size())
 if __name__ == "__main__":
     model = Pix2Pix().to(device)
     model.train(EPOCHS, x_train,batch_test, device)
