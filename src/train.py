@@ -5,7 +5,7 @@ from torchvision.datasets import Cityscapes
 import torchvision
 import wandb
 
-BATCH_SIZE = 55
+BATCH_SIZE = 8
 IMG_SIZE = (512,512)
 EPOCHS = 100
 device = torch.device('cuda' if torch.cuda.is_available() else torch.device('cpu'))

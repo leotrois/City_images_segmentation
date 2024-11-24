@@ -13,11 +13,12 @@ class down(nn.Module):
         self.couche2 = nn.Conv2d(in_channels=out_channels, out_channels= out_channels,kernel_size=(3,3),  padding='same')
         self.maxpool = nn.MaxPool2d(kernel_size=(2,2))
         self.dropout = nn.Dropout(0.3)
+        self.last = last
     def forward(self,x):
         x = self.couche1(x)
         x = nn.functional.leaky_relu(x)
         x = self.couche2(x)
-        if last == False:
+        if self.last == False:
             x = nn.functional.leaky_relu(x)
             x = self.maxpool(x)
             x = self.dropout(x)
