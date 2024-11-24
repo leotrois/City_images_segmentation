@@ -7,7 +7,7 @@ import wandb
 
 BATCH_SIZE = 55
 IMG_SIZE = (512,512)
-EPOCHS = 100
+EPOCHS = 50
 device = torch.device('cuda' if torch.cuda.is_available() else torch.device('cpu'))
 
 

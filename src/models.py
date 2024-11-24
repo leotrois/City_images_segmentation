@@ -104,7 +104,7 @@ class Discriminateur(nn.Module):
     #Ne marche probablement pas, je n'ai pas réfléchi aux tailles et nombre de canaux
     def __init__(self, nb_features) -> None:
         super().__init__()
-        self.down1 = down(7,nb_features)
+        self.down1 = down(6,nb_features)
         self.down2 = down(nb_features,nb_features*2)
         self.down3 = down(nb_features * 2, nb_features* 4)
         self.down4 = down(nb_features * 4, nb_features* 8)
@@ -141,12 +141,11 @@ class Pix2Pix(nn.Module):
         
 
     def train_step(self, X_batch, Y_batch):
-
         # On commence par entrainer le discriminateur
         self.discriminateur.zero_grad()
         
         fake_images = self.unet(X_batch)
-        real_images = list(map(lambda img : torchvision.transforms.Compose([torchvision.transforms.Resize(IMG_SIZE),torchvision.transforms.ToTensor()])(img.convert("RGB"),Y_batch)))
+        real_images = Y_batch[:,:3,:,:]
         disc_real_output = self.discriminateur(real_images,X_batch)
         disc_fake_output = self.discriminateur(fake_images,X_batch)
         gan_loss = self.discriminateur.loss(disc_real_output, disc_fake_output, torch.nn.BCEWithLogitsLoss())
@@ -177,7 +176,7 @@ class Pix2Pix(nn.Module):
                 wandb.log({"gen_loss":loss, "d_CE_loss":gan_loss, "L1_loss": l1, "g_CE_loss":dupage_discriminateur })
                 
             
-            input = transforms.ToPILImage()(torch.squeeze(batch_test[0]))
+            input = transforms.ToPILImage()(torch.squeeze(batch_test[0])[:3,:,:])
             pred = transforms.ToPILImage()(torch.squeeze(self.forward(batch_test[0].to(device)))).convert("RGB")
             
             ground_truth = transforms.ToPILImage()(torch.squeeze(batch_test[1].to(device))).convert("RGB")
