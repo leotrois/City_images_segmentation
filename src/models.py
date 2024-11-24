@@ -92,7 +92,7 @@ class Unet_with_cat(nn.Module):
         
         l1=torch.nn.L1Loss()(real_images,fake_images)
         
-        dupage_discriminateur = torch.nn.BCEWithLogitsLoss()(disc_pred,torch.ones_like(disc_pred))
+        dupage_discriminateur =-torch.mean(disc_pred)
 
         loss_gen = dupage_discriminateur + 100 * l1
         return loss_gen , dupage_discriminateur, l1
@@ -107,7 +107,7 @@ class Discriminateur(nn.Module):
         self.down2 = down(nb_features,nb_features*2)
         self.down3 = down(nb_features * 2, nb_features* 4)
         self.down4 = down(nb_features * 4, nb_features* 8)
-        self.down5 = down(nb_features * 8, 1,last = True) # On veut une grille de pixels
+        self.down5 = down(nb_features * 8, 1) # On veut une grille de pixels
         # En sortie on n'a pas un nombre car Patch Gan !!! Chaque pixel de l'image 
     def forward(self, x, y):
         x = torch.cat([x,y], dim = 1) # (batch size, 256,256,channels*2)
@@ -119,12 +119,8 @@ class Discriminateur(nn.Module):
         return x
     def loss(self,disc_real_output, disc_generated_output, bce_loss):
         
-        real_loss = bce_loss(disc_real_output,torch.ones_like(disc_real_output))
-        generated_loss = bce_loss(disc_generated_output,torch.zeros_like(disc_generated_output))
-        
-        total_disc_loss= real_loss + generated_loss
-        
-        return total_disc_loss
+        loss = torch.mean(disc_generated_output ) - torch.mean(disc_real_output)        
+        return loss
     
 class Pix2Pix(nn.Module):
     

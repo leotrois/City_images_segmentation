@@ -12,7 +12,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else torch.device('cpu
 
 
 run = wandb.init(
-    project="City_images_segmentation",
+    project="City_images_segmentation_Wasserstein_loss",
     # Sauvegarde des hyperparamètres
     config={
         "epochs": EPOCHS,
