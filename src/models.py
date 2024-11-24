@@ -11,13 +11,14 @@ class down(nn.Module):
         super().__init__()
         self.couche1 = nn.Conv2d(in_channels=in_channels, out_channels= out_channels,kernel_size=(3,3),  padding='same')
         self.couche2 = nn.Conv2d(in_channels=out_channels, out_channels= out_channels,kernel_size=(3,3),  padding='same')
-        self.maxpool = nn.MaxPool2d(kernel_size=(2,2))
+        self.maxpool = nn.MaxPool2d(kernel_size =(2,2))
         self.dropout = nn.Dropout(0.3)
+        self.last = last
     def forward(self,x):
         x = self.couche1(x)
         x = nn.functional.leaky_relu(x)
         x = self.couche2(x)
-        if last == False:
+        if self.last == False:
             x = nn.functional.leaky_relu(x)
             x = self.maxpool(x)
             x = self.dropout(x)
@@ -71,7 +72,7 @@ class Unet_with_cat(nn.Module):
         self.up1 = up(nb_features *8, nb_features*4) 
         self.up2 = up(nb_features *4, nb_features*2) 
         self.up3 = up(nb_features *2, nb_features) 
-        self.up4 = up(nb_features, 4,activation=False) 
+        self.up4 = up(nb_features, 3,activation=False) 
     
     def forward(self,x):
         x0 = x
@@ -145,7 +146,7 @@ class Pix2Pix(nn.Module):
         self.discriminateur.zero_grad()
         
         fake_images = self.unet(X_batch)
-        real_images = Y_batch
+        real_images = list(map(lambda img : torchvision.transforms.Compose([torchvision.transforms.Resize(IMG_SIZE),torchvision.transforms.ToTensor()])(img.convert("RGB"),Y_batch)))
         disc_real_output = self.discriminateur(real_images,X_batch)
         disc_fake_output = self.discriminateur(fake_images,X_batch)
         gan_loss = self.discriminateur.loss(disc_real_output, disc_fake_output, torch.nn.BCEWithLogitsLoss())
@@ -157,7 +158,7 @@ class Pix2Pix(nn.Module):
         self.unet.zero_grad()
         fake_images = self.unet(X_batch)
         disc_fake_output = self.discriminateur(fake_images,X_batch)
-        loss_tuple = self.unet.loss(Y_batch, fake_images, disc_fake_output)
+        loss_tuple = self.unet.loss(real_images, fake_images, disc_fake_output)
         
         loss_value, dupage_discriminateur, l1    = loss_tuple
         
